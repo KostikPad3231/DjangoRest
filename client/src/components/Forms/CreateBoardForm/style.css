@@ -1,0 +1,8 @@
+.select-is-invalid {
+  border: 1px solid #dc3545;
+  border-radius: 4px;
+
+  .css-yk16xz-control {
+    border: none;
+  }
+}

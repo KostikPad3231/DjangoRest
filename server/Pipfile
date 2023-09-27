@@ -1,0 +1,24 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+django = "*"
+psycopg2-binary = "*"
+djangorestframework = "*"
+markdown = "*"
+pillow = "*"
+django-cors-headers = "*"
+dj-rest-auth = "*"
+drf-extra-fields = "*"
+celery = "*"
+django-allauth = "0.56.1"
+redis = "*"
+flower = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.11"
+python_full_version = "3.11.0"
