@@ -1,5 +1,6 @@
 import math
 
+from django.conf import settings
 from django.db import models
 from django.utils import html
 from django.utils.text import Truncator
@@ -25,7 +26,7 @@ class Topic(models.Model):
 
     def get_page_count(self):
         count = self.posts.count()
-        pages = count / 20
+        pages = count / 10
         return math.ceil(pages)
 
     def has_many_pages(self, count=None):
@@ -36,8 +37,8 @@ class Topic(models.Model):
     def get_page_range(self):
         count = self.get_page_count()
         if self.has_many_pages(count):
-            return range(1, 5)
-        return range(1, count + 1)
+            return list(range(1, 4)) + [count]
+        return list(range(1, count + 1))
 
     def get_last_ten_posts(self):
         return self.posts.order_by('-created_at')[:10]
@@ -63,7 +64,6 @@ class Post(models.Model):
 
 
 class Photo(models.Model):
-    title = models.CharField(max_length=255, blank=True)
-    file = models.ImageField(upload_to='topics/images')
+    file = models.ImageField(upload_to='posts/images')
     uploaded_at = models.DateTimeField(auto_now_add=True)
-    topic = models.ForeignKey(Topic, related_name='photos', on_delete=models.CASCADE, null=True, blank=True)
+    post = models.ForeignKey(Post, related_name='photos', on_delete=models.CASCADE, null=True, blank=True)

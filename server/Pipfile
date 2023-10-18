@@ -16,6 +16,9 @@ celery = "*"
 django-allauth = "0.56.1"
 redis = "*"
 flower = "*"
+social-auth-app-django = "*"
+rest-social-auth = "*"
+drf-social-oauth2 = "*"
 
 [dev-packages]
 

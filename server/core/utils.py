@@ -10,5 +10,5 @@ class StandardResultSetPagination(PageNumberPagination):
 
     def paginate_queryset(self, queryset, request, view=None):
         if 'all' in request.query_params:
-            return
+            return None
         return super().paginate_queryset(queryset, request, view)

@@ -18,21 +18,29 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
-from rest_framework import routers
+
+# from dj_rest_auth.registration.views import SocialAccountListView, SocialAccountDisconnectView
+# from allauth.socialaccount.providers.github import views as github_views
+# from allauth.socialaccount.providers.twitter import views as twitter_views
 
 from accounts import views as accounts_views
-from core import views as core_views
-
-router = routers.DefaultRouter()
-router.register(r'users', accounts_views.UserViewSet)
-router.register(r'boards', core_views.BoardViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('auth/', include('accounts.urls')),
-    path('api/', include(router.urls)),
-    path('api/users/me/', accounts_views.UserViewSet.as_view({'pk': 'me'})),
+    path('oauth/', include('social_django.urls', namespace='social')),
+    # path('oauth/accounts/', SocialAccountListView.as_view(), name='social_account_list'),
+    # path('oauth/accounts/<int:pk>/disconnect/', SocialAccountDisconnectView.as_view(), name='social_account_disconnect'),
+    # path('oauth/twitter/', accounts_views.TwitterLogin.as_view(), name='twitter_login'),
+    # path('oauth/github/', accounts_views.GitHubLogin.as_view(), name='github_login'),
+    # path('oauth/twitter/callback/', accounts_views.twitter_callback, name='twitter_callback'),
+    # path('oauth/github/callback/', accounts_views.github_callback, name='github_callback'),
+    # path('oauth/twitter/url/', twitter_views.oauth_login, name='twitter_login_url'),
+    # path('oauth/github/url/', github_views.oauth2_login, name='github_login_url'),
+    path('api/user/me/', accounts_views.UserRetrieveAPIView.as_view()),
+    path('api/user/me/edit/', accounts_views.UserUpdateAPIView.as_view()),
     path('api/token/verify-token/', accounts_views.VerifyToken.as_view()),
+    path('api/', include('core.urls')),
 ]
 
 if settings.DEBUG:

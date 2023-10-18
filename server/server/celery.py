@@ -10,7 +10,6 @@ from celery import Celery
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'server.settings.dev')
 
 app = Celery('server')
-app.conf.broker_url = 'redis://redis:6379/0'
 app.config_from_object('django.conf:settings')
 app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
 

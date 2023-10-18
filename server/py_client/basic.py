@@ -12,10 +12,10 @@ from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 
 from dj_rest_auth.registration.views import RegisterView, SocialLoginView
-# from allauth.socialaccount.providers.twitter.views import TwitterOAuthAdapter
-# from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
-# from dj_rest_auth.social_serializers import TwitterLoginSerializer
-# from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+from allauth.socialaccount.providers.twitter.views import TwitterOAuthAdapter
+from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
+from dj_rest_auth.social_serializers import TwitterLoginSerializer
+from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 
 from accounts.models import User
 from accounts.serializers import UserSerializer, BloggerRegisterSerializer, ReaderRegisterSerializer
@@ -33,8 +33,6 @@ class UserRetrieveAPIView(generics.RetrieveAPIView):
 
 class VerifyToken(APIView):
     def get(self, request):
-        print('get')
-        print(request.headers)
         token_header = request.headers['Authorization'].split(' ')
         if len(token_header) == 2:
             token = token_header[1]
@@ -73,30 +71,30 @@ class UserUpdateAPIView(generics.UpdateAPIView):
         return super(UserUpdateAPIView, self).get_object()
 
 
-# class TwitterLogin(SocialLoginView):
-#     # serializer_class = TwitterLoginSerializer
-#     adapter_class = TwitterOAuthAdapter
-#     client_class = OAuth2Client
-#
-#     @property
-#     def callback_url(self):
-#         return self.request.build_absolute_uri(reverse('twitter_callback'))
-#
-#
-# class GitHubLogin(SocialLoginView):
-#     adapter_class = GitHubOAuth2Adapter
-#     client_class = OAuth2Client
-#
-#     @property
-#     def callback_url(self):
-#         return self.request.build_absolute_uri(reverse('github_callback'))
-#
-#
-# def github_callback(request):
-#     params = urllib.parse.urlencode(request.GET)
-#     return redirect(f'http://localhost:3000/auth/github?{params}')
-#
-#
-# def twitter_callback(request):
-#     params = urllib.parse.urlencode(request.GET)
-#     return redirect(f'http://localhost:3000/auth/twitter?{params}')
+class TwitterLogin(SocialLoginView):
+    # serializer_class = TwitterLoginSerializer
+    adapter_class = TwitterOAuthAdapter
+    client_class = OAuth2Client
+
+    @property
+    def callback_url(self):
+        return self.request.build_absolute_uri(reverse('twitter_callback'))
+
+
+class GitHubLogin(SocialLoginView):
+    adapter_class = GitHubOAuth2Adapter
+    client_class = OAuth2Client
+
+    @property
+    def callback_url(self):
+        return self.request.build_absolute_uri(reverse('github_callback'))
+
+
+def github_callback(request):
+    params = urllib.parse.urlencode(request.GET)
+    return redirect(f'http://localhost:3000/auth/github?{params}')
+
+
+def twitter_callback(request):
+    params = urllib.parse.urlencode(request.GET)
+    return redirect(f'http://localhost:3000/auth/twitter?{params}')

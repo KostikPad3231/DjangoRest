@@ -7,16 +7,59 @@ from allauth.account import app_settings as allauth_settings
 from allauth.account.adapter import get_adapter
 from allauth.account.utils import setup_user_email
 
-from .models import User, Blogger, Reader, Category
+from .models import User, Blogger, Reader, Category, Avatar, Action
+
+
+class AvatarSerializer(serializers.ModelSerializer):
+    file = Base64ImageField()
+
+    class Meta:
+        model = Avatar
+        fields = ['file']
+
+
+class ActionSerializer(serializers.ModelSerializer):
+    board_id = serializers.IntegerField(source='subject.id', allow_null=True)
+
+    class Meta:
+        model = Action
+        fields = ['id', 'action_tag', 'subject_name', 'message', 'board_id']
 
 
 class UserSerializer(serializers.ModelSerializer):
-    avatar = Base64ImageField(
-        required=False)
+    avatar = AvatarSerializer(required=False, allow_null=True)
+    posts_count = serializers.SerializerMethodField(read_only=True)
+    # TODO sort by -made-at
+    last_actions = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'avatar', 'auth_token')
+        fields = ('id', 'username', 'email', 'avatar', 'is_blogger', 'is_reader', 'posts_count', 'last_actions')
+
+    def validate_username(self, username):
+        if self.instance.username != username and User.objects.filter(username=username).count() > 0:
+            raise serializers.ValidationError(
+                _('A user is already registered with this username')
+            )
+        return username
+
+    def update(self, instance, validated_data):
+        avatar_data = validated_data.pop('avatar')
+        instance.username = validated_data.get('username', instance.username)
+        instance.email = validated_data.get('username', instance.email)
+        if hasattr(instance, 'avatar') and instance.avatar and avatar_data:
+            instance.avatar.delete()
+        if avatar_data:
+            Avatar.objects.create(user=instance, **avatar_data)
+        return instance
+
+    def get_posts_count(self, obj):
+        return obj.posts_count()
+
+    def get_last_actions(self, obj):
+        actions = obj.last_actions()
+        action_serializer = ActionSerializer(actions, many=True)
+        return action_serializer.data
 
 
 class RegisterSerializer(serializers.Serializer):
@@ -28,11 +71,18 @@ class RegisterSerializer(serializers.Serializer):
     def validate_email(self, email):
         email = get_adapter().clean_email(email)
         if allauth_settings.UNIQUE_EMAIL:
-            if email:
+            if email and User.objects.filter(email=email).count() > 0:
                 raise serializers.ValidationError(
                     _('A user is already registered with this e-mail address.')
                 )
         return email
+
+    def validate_username(self, username):
+        if User.objects.filter(username=username).count() > 0:
+            raise serializers.ValidationError(
+                _('A user is already registered with this username')
+            )
+        return username
 
     def validate_password1(self, password):
         return get_adapter().clean_password(password)
@@ -81,10 +131,10 @@ class BloggerRegisterSerializer(RegisterSerializer):
         user.is_blogger = True
         user.save()
         blogger = Blogger(user=user, birthday=self.cleaned_data.get('birthday'),
-                          country_city=self.cleaned_data.get('country_city'),
-                          categories=self.cleaned_data.get('categories'))
+                          country_city=self.cleaned_data.get('country_city'), )
+        blogger.categories.set(self.cleaned_data.get('categories'))
         blogger.save()
-        return blogger
+        return user
 
 
 class ReaderRegisterSerializer(RegisterSerializer):
@@ -105,7 +155,7 @@ class ReaderRegisterSerializer(RegisterSerializer):
         user.is_reader = True
         user.save()
         reader = Reader(user=user,
-                        has_eighteen=self.cleaned_data.get('has_eighteen'),
-                        interests=self.cleaned_data.get('interests'))
+                        has_eighteen=self.cleaned_data.get('has_eighteen'))
+        reader.interests.set(self.cleaned_data.get('interests'))
         reader.save()
-        return reader
+        return user

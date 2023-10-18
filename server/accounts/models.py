@@ -14,6 +14,12 @@ class User(AbstractUser):
     is_blogger = models.BooleanField(default=False)
     is_reader = models.BooleanField(default=False)
 
+    def posts_count(self):
+        return self.posts.count()
+
+    def last_actions(self):
+        return Action.objects.filter(user_id=self.id).order_by('-made_at')[:10]
+
 
 class Blogger(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, primary_key=True)
@@ -34,7 +40,7 @@ class Action(models.Model):
         UPDATE = 'U'
         DELETE = 'D'
 
-    message = models.CharField(max_length=64)
+    message = models.CharField()
     action_tag = models.CharField(max_length=1, choices=ActionTag.choices)
     subject_name = models.CharField(max_length=100, null=True)
     subject = models.ForeignKey('core.Board', on_delete=models.SET_NULL, null=True)
