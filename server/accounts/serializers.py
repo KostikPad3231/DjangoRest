@@ -1,5 +1,8 @@
+from allauth.socialaccount.models import SocialAccount
+from django.contrib.auth.forms import SetPasswordForm
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
+from dj_rest_auth.app_settings import api_settings
 
 from drf_extra_fields.fields import Base64ImageField
 
@@ -31,10 +34,12 @@ class UserSerializer(serializers.ModelSerializer):
     posts_count = serializers.SerializerMethodField(read_only=True)
     # TODO sort by -made-at
     last_actions = serializers.SerializerMethodField(read_only=True)
+    has_usable_password = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'avatar', 'is_blogger', 'is_reader', 'posts_count', 'last_actions')
+        fields = ('id', 'username', 'email', 'avatar', 'is_blogger', 'is_reader', 'posts_count', 'last_actions',
+                  'has_usable_password')
 
     def validate_username(self, username):
         if self.instance.username != username and User.objects.filter(username=username).count() > 0:
@@ -52,6 +57,9 @@ class UserSerializer(serializers.ModelSerializer):
         if avatar_data:
             Avatar.objects.create(user=instance, **avatar_data)
         return instance
+
+    def get_has_usable_password(self, obj):
+        return obj.has_usable_password()
 
     def get_posts_count(self, obj):
         return obj.posts_count()
@@ -159,3 +167,59 @@ class ReaderRegisterSerializer(RegisterSerializer):
         reader.interests.set(self.cleaned_data.get('interests'))
         reader.save()
         return user
+
+
+class SocialAccountListSerializer(serializers.ModelSerializer):
+    login = serializers.SerializerMethodField()
+    name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SocialAccount
+        fields = (
+            'id',
+            'provider',
+            'uid',
+            'last_login',
+            'date_joined',
+            'name',
+            'login',
+        )
+
+    def get_login(self, obj):
+        extra_data = obj.extra_data
+        return extra_data.get('login', None) if extra_data else None
+
+    def get_name(self, obj):
+        extra_data = obj.extra_data
+        return extra_data.get('name', None) if extra_data else None
+
+
+class PasswordSetSerializer(serializers.Serializer):
+    new_password1 = serializers.CharField(max_length=128)
+    new_password2 = serializers.CharField(max_length=128)
+
+    set_password_form_class = SetPasswordForm
+
+    set_password_form = None
+
+    def __init__(self, *args, **kwargs):
+        self.logout_on_password_change = api_settings.LOGOUT_ON_PASSWORD_CHANGE
+        super().__init__(*args, **kwargs)
+
+        self.request = self.context.get('request')
+        self.user = getattr(self.request, 'user', None)
+
+    def validate(self, attrs):
+        self.set_password_form = self.set_password_form_class(
+            user=self.user, data=attrs,
+        )
+
+        if not self.set_password_form.is_valid():
+            raise serializers.ValidationError(self.set_password_form.errors)
+        return attrs
+
+    def save(self):
+        self.set_password_form.save()
+        if not self.logout_on_password_change:
+            from django.contrib.auth import update_session_auth_hash
+            update_session_auth_hash(self.request, self.user)

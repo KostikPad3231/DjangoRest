@@ -1,10 +1,16 @@
+import csv
+
 from django.db.models import Subquery, OuterRef, Count, F, Q, Sum
+from django.template.loader import render_to_string
+from django.http import HttpResponse
+from django.views import View
 from rest_framework import viewsets, generics, status, mixins
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from weasyprint import HTML
 
 from accounts.models import Action
 from .models import Board, Post, Topic
@@ -17,7 +23,7 @@ class BoardViewSet(viewsets.ModelViewSet):
     serializer_class = BoardSerializer
     queryset = Board.objects.all()
     # TODO return permissions
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     pagination_class = StandardResultSetPagination
 
     def get_queryset(self):
@@ -133,7 +139,44 @@ class PostEditAPIView(generics.UpdateAPIView):
         else:
             return Response({'detail': 'access denied'}, status=status.HTTP_403_FORBIDDEN)
 
+
 # class PostCreateAPIView(generics.CreateAPIView):
 #     queryset = Post.objects.all()
 #     serializer_class = TopicPostsSerializer
 #     permission_classes = [IsAuthenticated]
+
+
+class ExportTopicsToCSV(View):
+    def get(self, request, pk=None):
+        print(self.kwargs)
+        print(pk)
+        response = HttpResponse(content_type='text/csv')
+        response['Access-Control-Expose-Headers'] = 'Content-Disposition'
+        response['Content-Disposition'] = 'attachment; filename="topics.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow(['Topic', 'Starter', 'Replies', 'Views', 'Last Update'])
+
+        topics = Topic.objects.filter(board_id=pk).order_by('-last_updated').annotate(
+            replies=Count('posts') - 1).values_list('subject', 'starter__username', 'replies', 'views', 'last_updated')
+
+        for topic in topics:
+            writer.writerow(topic)
+
+        return response
+
+
+class ExportTopicsToPDF(APIView):
+    def get(self, request, pk=None):
+        topics = Topic.objects.filter(board_id=pk).order_by('-last_updated').annotate(
+            replies=Count('posts') - 1)
+        html_string = render_to_string('topics_pfd_template.html', {'topics': topics})
+
+        html = HTML(string=html_string)
+        pdf_file = html.write_pdf()
+
+        response = HttpResponse(pdf_file, content_type='application/pdf')
+        response['Access-Control-Expose-Headers'] = 'Content-Disposition'
+        response['Content-Disposition'] = 'attachment; filename="topics.pdf"'
+
+        return response

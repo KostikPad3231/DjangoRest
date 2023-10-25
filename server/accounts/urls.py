@@ -1,10 +1,12 @@
 from dj_rest_auth.registration.views import VerifyEmailView
+from django.contrib.admin.forms import AdminPasswordChangeForm
 from django.urls import path, include, re_path
 from dj_rest_auth.views import PasswordResetConfirmView
-from .views import BloggerRegistrationView, ReaderRegistrationView, email_confirm_redirect, password_reset_redirect
+from .views import BloggerRegistrationView, ReaderRegistrationView, email_confirm_redirect, password_reset_redirect, SetPasswordView
 
 urlpatterns = [
     path('', include('dj_rest_auth.urls')),
+    path('password/set/', SetPasswordView.as_view(), name='set_password'),
     path('accounts/', include('allauth.urls')),
     path('registration/blogger/', BloggerRegistrationView.as_view(), name='register_blogger'),
     path('registration/reader/', ReaderRegistrationView.as_view(), name='register_reader'),

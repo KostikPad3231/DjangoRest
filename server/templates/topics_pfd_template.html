@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>{% block title %}Django Boards{% endblock %}</title>
+    <style>
+        .table {
+            width: 100%;
+            margin-bottom: 1rem;
+            background-color: transparent;
+            border-spacing: inherit;
+        }
+
+        .table .thead-dark th {
+            color: #fff;
+            background-color: #212529;
+            border-color: #32383e;
+        }
+
+        .table thead th {
+            vertical-align: bottom;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .table td, .table th {
+            padding: 0.75rem;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .table tr {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<table class="table">
+    <thead class="thead-dark thead-inverse">
+    <tr>
+        <th class="text-center">Topic</th>
+        <th class="text-center">Starter</th>
+        <th class="text-center">Replies</th>
+        <th class="text-center">Views</th>
+        <th class="text-center">Last Update</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for topic in topics %}
+        <tr>
+            <td class="text-center">{{ topic.subject }}</td>
+            <td class="text-center">{{ topic.starter.username }}</td>
+            <td class="text-center">{{ topic.replies }}</td>
+            <td class="text-center">{{ topic.views }}</td>
+            <td class="text-center">{{ topic.last_updated }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+</body>

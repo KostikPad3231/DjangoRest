@@ -37,18 +37,20 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+    'django.contrib.flatpages',
 
     'rest_framework',
     'rest_framework.authtoken',
     'allauth',
     'allauth.account',
-    # 'allauth.socialaccount',
-    # 'allauth.socialaccount.providers.twitter',
-    # 'allauth.socialaccount.providers.github',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.twitter',
+    'allauth.socialaccount.providers.github',
+    'allauth.socialaccount.providers.google',
     'dj_rest_auth',
     'dj_rest_auth.registration',
 
-    'social_django',
+    # 'social_django',
 
     'corsheaders',
 
@@ -61,15 +63,15 @@ SITE_ID = 1
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
-    'corsheaders.middleware.CorsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
-    'social_django.middleware.SocialAuthExceptionMiddleware',
+    # 'social_django.middleware.SocialAuthExceptionMiddleware',
 ]
 
 REST_FRAMEWORK = {
@@ -79,14 +81,27 @@ REST_FRAMEWORK = {
     ]
 }
 
+REST_AUTH = {
+    'OLD_PASSWORD_FIELD_ENABLED': True,
+}
+
 CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_METHODS = (
+    "DELETE",
+    "HEAD",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+)
 
 ROOT_URLCONF = 'server.urls'
-
+print(BASE_DIR / 'templates')
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates']
+        'DIRS': [BASE_DIR / '../templates']
         ,
         'APP_DIRS': True,
         'OPTIONS': {
@@ -96,8 +111,8 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
 
-                'social_django.context_processors.backends',
-                'social_django.context_processors.login_redirect',
+                # 'social_django.context_processors.backends',
+                # 'social_django.context_processors.login_redirect',
             ],
         },
     },
@@ -176,22 +191,23 @@ PASSWORD_RESET_REDIRECT_URL = 'http://localhost:3000/profile/password/reset/'
 #     "http://localhost:3000/password-reset/confirm/"
 
 AUTHENTICATION_BACKENDS = (
-    'social_core.backends.twitter.TwitterOAuth',
+    # 'social_core.backends.twitter.TwitterOAuth',
     'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
 )
 
-# LOGIN_URL = 'http://localhost:3000/login'
+LOGIN_URL = 'http://localhost:3000/login'
 LOGOUT_URL = 'http://localhost:3000/logout'
 LOGIN_REDIRECT_URL = 'http://localhost:3000/'
 
-SOCIAL_AUTH_GITHUB_KEY = 'bc34cbad1357908d48d3'
-SOCIAL_AUTH_GITHUB_SECRET = 'a86bc35ff51ba42c21aa66feb058701aefbca064'
-
-SOCIAL_AUTH_TWITTER_KEY = 'OhFd88hHMMqbI8MYAxYp6nbxW'
-SOCIAL_AUTH_TWITTER_SECRET = 'nsEiNCAaB5VDtc2vFiUmGPuyDSsrm6P0t291e1ix21xv5iHmTL'
-
-SOCIAL_AUTH_GITLAB_KEY = '3abed162d2ae869cbb2018155e1d684aaf2f47008b5a3b2ec1275647e7e351e7'
-SOCIAL_AUTH_GITLAB_SECRET = '980fab3a93be161981c9ff061e089e59598407a9bf08b0a76b8ab9eefa6eb8ad'
+# SOCIAL_AUTH_GITHUB_KEY = 'bc34cbad1357908d48d3'
+# SOCIAL_AUTH_GITHUB_SECRET = 'a86bc35ff51ba42c21aa66feb058701aefbca064'
+#
+# SOCIAL_AUTH_TWITTER_KEY = 'OhFd88hHMMqbI8MYAxYp6nbxW'
+# SOCIAL_AUTH_TWITTER_SECRET = 'nsEiNCAaB5VDtc2vFiUmGPuyDSsrm6P0t291e1ix21xv5iHmTL'
+#
+# SOCIAL_AUTH_GITLAB_KEY = '3abed162d2ae869cbb2018155e1d684aaf2f47008b5a3b2ec1275647e7e351e7'
+# SOCIAL_AUTH_GITLAB_SECRET = '980fab3a93be161981c9ff061e089e59598407a9bf08b0a76b8ab9eefa6eb8ad'
 
 # twitter
 # Z0NwU21FYnc4X3pTN0Vhb2FVMGo6MTpjaQ
@@ -200,3 +216,5 @@ SOCIAL_AUTH_GITLAB_SECRET = '980fab3a93be161981c9ff061e089e59598407a9bf08b0a76b8
 # github
 # bc34cbad1357908d48d3
 # a86bc35ff51ba42c21aa66feb058701aefbca064
+
+SOCIALACCOUNT_ADAPTER = 'accounts.adapters.SocialAccountAdapter'

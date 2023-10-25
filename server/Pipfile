@@ -19,6 +19,7 @@ flower = "*"
 social-auth-app-django = "*"
 rest-social-auth = "*"
 drf-social-oauth2 = "*"
+weasyprint = "*"
 
 [dev-packages]
 

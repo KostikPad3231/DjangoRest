@@ -1,98 +1,132 @@
-import React, {Component, lazy, Suspense} from 'react';
-import {Routes, Route} from 'react-router-dom';
+import React, {useState} from 'react';
 
-import * as path from '../src/constants/routes';
-import Main from './components/Main';
-import Loader from './components/Loader';
+import {createBrowserRouter, RouterProvider} from 'react-router-dom';
+import {Login} from './components/Login';
+import {Registration} from './components/SignUp/Registration';
+import {Home} from './components/Boards/Home';
+import {Profile} from './components/Profile/Profile';
+import {SignUpReader} from './components/SignUp/SignUpReader';
+import {SignUpBlogger} from './components/SignUp/SignUpBlogger';
+import {ConfirmEmail} from './components/SignUp/ConfirmEmail';
 
-import Home from './pages/Home/index';
-import Login from './pages/Login//index';
-import SignUp from './pages/SignUp/index';
-import PageNotFound from './components/PageNotFound/index';
+import {isAuth} from './hoc/isAuth';
+import * as path from './constants/routes';
 
 import './App.css';
+import 'react-datepicker/dist/react-datepicker.css';
+import {ReaderProfile} from './components/Profile/ReaderProfile';
+import {BloggerProfile} from './components/Profile/BloggerProfile';
+import {PasswordReset} from './components/Profile/PasswordReset';
+import {PasswordResetEmailForm} from './components/Profile/PasswordResetEmailForm';
+import {PasswordChange} from './components/Profile/PasswordChange';
+import {BoardTopics} from './components/Boards/BoardTopics';
+import {TopicPosts} from './components/Boards/TopicPosts';
+import {EditPost} from './components/Boards/EditPost';
+import {CreatePost} from './components/Boards/CreatePost';
+import {Twitter} from './components/Socials/Twitter';
+import {GitHub} from './components/Socials/GitHub';
+import {Google} from './components/Socials/Google';
+import {Messages} from './components/Messages';
+import {PasswordSet} from './components/Profile/PasswordSet';
+import {Root} from './components/Root';
 
-const Dashboard = lazy(() => import('./pages/Dashboard/index'));
-const Profile = lazy(() => import('./pages/Dashboard/Profile/index'));
-const Boards = lazy(() => import('./pages/Dashboard/Boards/index'));
-const ConfirmEmail = lazy(() => import('./pages/ConfirmEmail/index'));
-const ResetPassword = lazy(() => import('./pages/ResetPassword/index'));
+const router = createBrowserRouter([
+    {
+        path: path.ROOT,
+        element: (isAuth(Root)),
+        children: [
+            {
+                path: path.BOARDS,
+                element: isAuth(Home),
+            },
+            {
+                path: path.BOARD_TOPICS,
+                element: isAuth(BoardTopics),
+            },
+        ],
+    },
 
-class ErrorBoundary extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {hasError: false};
-    }
+    {
+        path: path.POST_CREATE,
+        element: isAuth(CreatePost),
+    },
+    {
+        path: path.POST_EDIT,
+        element: isAuth(EditPost),
+    },
+    {
+        path: path.TOPIC_POSTS,
+        element: isAuth(TopicPosts),
+    },
 
-    static getDerivedStateFromError(error) {
-        // Update state so the next render will show the fallback UI.
-        return {hasError: true};
-    }
+    {
+        path: path.PASSWORD_CHANGE,
+        element: isAuth(PasswordChange),
+    },
+    {
+        path: path.PASSWORD_SET,
+        element: <PasswordSet/>
+    },
+    {
+        path: path.PASSWORD_RESET_EMAIL,
+        element: <PasswordResetEmailForm/>,
+    },
+    {
+        path: path.PASSWORD_RESET + '/*',
+        element: <PasswordReset/>,
+    },
+    {
+        path: path.CONFIRM_EMAIL + '/*',
+        element: <ConfirmEmail/>,
+    },
+    {
+        path: path.PROFILE,
+        element: isAuth(Profile),
+    },
+    {
+        path: path.READER_PROFILE,
+        element: isAuth(ReaderProfile),
+    },
+    {
+        path: path.BLOGGER_PROFILE,
+        element: isAuth(BloggerProfile),
+    },
+    {
+        path: path.SIGN_IN,
+        element: <Login/>,
+    },
+    {
+        path: path.SIGN_UP,
+        element: <Registration/>,
+    },
+    {
+        path: path.SIGN_UP_READER,
+        element: <SignUpReader/>,
+    },
+    {
+        path: path.SIGN_UP_BLOGGER,
+        element: <SignUpBlogger/>,
+    },
+    {
+        path: path.TWITTER_SUCCESS,
+        element: <Twitter/>,
+    },
+    {
+        path: path.GITHUB_SUCCESS,
+        element: <GitHub/>,
+    },
+    {
+        path: path.GOOGLE_SUCCESS,
+        element: <Google/>,
+    },
+]);
 
-    componentDidCatch(error, info) {
-        // Example "componentStack":
-        //   in ComponentThatThrows (created by App)
-        //   in ErrorBoundary (created by App)
-        //   in div (created by App)
-        //   in App
-        console.log(error, info.componentStack);
-    }
+export const App = () => {
+    return (
+        <div className="App">
+            <RouterProvider router={router}/>
+        </div>
+    );
+};
 
-    render() {
-        if (this.state.hasError) {
-            // You can render any custom fallback UI
-            return this.props.fallback;
-        }
 
-        return this.props.children;
-    }
-}
-
-class App extends Component {
-
-    render() {
-        return (
-            <ErrorBoundary fallback={<p>Something went wrong</p>}>
-                <Routes>
-                    <Route exact path={path.HOME} element={<Home/>}/>
-                    <Route path={path.SIGN_IN} element={<Login/>}/>
-                    <Route exact path={path.SIGN_UP} element={<SignUp/>}/>
-                </Routes>
-                <Main {...this.props}>
-                    <Suspense fallback={<Loader/>}>
-                        <Routes>
-                            <Route
-                                exact
-                                path={path.DASHBOARD}
-                                Component={Dashboard}
-                            />
-                            <Route
-                                exact
-                                path={path.BOARDS}
-                                Component={Boards}
-                            />
-                            <Route
-                                exact
-                                path={path.PROFILE}
-                                Component={Profile}
-                            />
-                            <Route
-                                exact
-                                path={path.CONFIRM_EMAIL}
-                                Component={ConfirmEmail}
-                            />
-                            <Route
-                                exact
-                                path={path.RESET_PASSWORD}
-                                Component={ResetPassword}
-                            />
-                            <Route render={props => <PageNotFound {...props} />}/>
-                        </Routes>
-                    </Suspense>
-                </Main>
-            </ErrorBoundary>
-        );
-    }
-}
-
-export default App;
