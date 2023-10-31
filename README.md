@@ -4,7 +4,7 @@
 
 - ### Install node modules
 
-  - `docker-compose run client yarn`
+  - `docker-compose run client npm install`
 
 - ### Run python migrations
 
