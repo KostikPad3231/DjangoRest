@@ -97,7 +97,7 @@ CORS_ALLOW_METHODS = (
 )
 
 ROOT_URLCONF = 'server.urls'
-print(BASE_DIR / 'templates')
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -198,7 +198,8 @@ AUTHENTICATION_BACKENDS = (
 
 LOGIN_URL = 'http://localhost:3000/login'
 LOGOUT_URL = 'http://localhost:3000/logout'
-LOGIN_REDIRECT_URL = 'http://localhost:3000/'
+CLIENT_URL = 'http://localhost:3000/boards'
+LOGIN_REDIRECT_URL = 'http://localhost:3000/boards'
 
 # SOCIAL_AUTH_GITHUB_KEY = 'bc34cbad1357908d48d3'
 # SOCIAL_AUTH_GITHUB_SECRET = 'a86bc35ff51ba42c21aa66feb058701aefbca064'
@@ -217,4 +218,5 @@ LOGIN_REDIRECT_URL = 'http://localhost:3000/'
 # bc34cbad1357908d48d3
 # a86bc35ff51ba42c21aa66feb058701aefbca064
 
+# ACCOUNT_ADAPTER = 'accounts.adapters.AccountAdapter'
 SOCIALACCOUNT_ADAPTER = 'accounts.adapters.SocialAccountAdapter'

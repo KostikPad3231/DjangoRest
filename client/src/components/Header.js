@@ -9,10 +9,14 @@ import profileAvatar from '../assets/profile-icon.png';
 export const Header = (props) => {
     const navigate = useNavigate();
     const handleLogout = async () => {
-        // TODO process errors
-        await logout();
-        localStorage.removeItem('token');
+        try{
+            await logout();
+            localStorage.removeItem('token');
         navigate(SIGN_IN);
+        }
+        catch (error) {
+            console.log(error);
+        }
     };
     let links;
     if (props.hasOwnProperty('user') && props.user) {
@@ -46,7 +50,7 @@ export const Header = (props) => {
     return (
         <Navbar expand="sm" className="bg-body-tertiary">
             <Container>
-                <Link to={path.HOME} className="navbar-brand">Django Boards</Link>
+                <Link to={path.BOARDS} className="navbar-brand">Django Boards</Link>
                 <Navbar.Toggle aria-controls="basic-navbar-nav"/>
                 <Navbar.Collapse id="basic-navbar-nav" className="justify-content-end">
                     {links}

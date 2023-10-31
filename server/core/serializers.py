@@ -1,22 +1,31 @@
+from django.utils import timezone
 from rest_framework import serializers
 from drf_extra_fields.fields import Base64ImageField
 
-from accounts.models import User, Action
+from accounts.models import User, Action, Category
 from accounts.serializers import UserSerializer
 from core.models import Board, Topic, Post, Photo
+
+
+class CategoriesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['id', 'name']
 
 
 class BoardSerializer(serializers.ModelSerializer):
     latest_post_id = serializers.IntegerField(read_only=True)
     latest_post_created_at = serializers.DateTimeField(read_only=True)
     latest_post_created_by = serializers.CharField(read_only=True)
+    latest_post_subject = serializers.CharField(read_only=True)
+    latest_post_topic_id = serializers.IntegerField(read_only=True)
     posts_count = serializers.IntegerField(read_only=True)
     topics_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Board
         fields = ['id', 'name', 'description', 'created_at', 'is_active', 'latest_post_id', 'latest_post_created_at',
-                  'latest_post_created_by', 'posts_count', 'topics_count']
+                  'latest_post_created_by', 'latest_post_subject', 'latest_post_topic_id', 'posts_count', 'topics_count']
 
 
 class TopicSerializer(serializers.ModelSerializer):
@@ -70,6 +79,7 @@ class PostEditSerializer(serializers.ModelSerializer):
         for photo in validated_data['photos']:
             Photo.objects.create(post=instance, **photo)
         instance.message = validated_data['message']
+        instance.updated_at = timezone.now()
         instance.save()
         return instance
 
@@ -100,8 +110,7 @@ class TopicPostsSerializer(serializers.ModelSerializer):
     photos = PhotoSerializer(many=True)
     topic_id = serializers.IntegerField(write_only=True)
     user = serializers.IntegerField(write_only=True, default=serializers.CurrentUserDefault(), required=False)
-    message = serializers.CharField(max_length=10)
-    # TODO process errors
+    message = serializers.CharField(max_length=4000)
 
     class Meta:
         model = Post

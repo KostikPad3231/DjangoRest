@@ -15,6 +15,7 @@ const TopicCreateSchema = Yup.object({
 
 
 export const CreateTopicModal = ({show, setShow, handleCreate}) => {
+    const [errors, setErrors] = useState({});
     const handleClose = () => setShow(false);
     const [images, setImages] = useState([]);
     const onRemoveAllImages = useRef(null);
@@ -39,10 +40,20 @@ export const CreateTopicModal = ({show, setShow, handleCreate}) => {
                         values.photos = images.map(image => ({
                             file: image.photo
                         }));
-                        handleClose();
-                        onRemoveAllImages.current();
-                        handleCreate(values);
-                        setMarkdownText('');
+                        try {
+                            await handleCreate(values);
+                            handleClose();
+                            onRemoveAllImages.current();
+                            setMarkdownText('');
+                        } catch (error) {
+                            const errors = {};
+                            const errorData = error.response.data;
+                            for (const key in errorData) {
+                                const element = errorData[key];
+                                errors[key] = element.toString();
+                            }
+                            setErrors(errors);
+                        }
                     }}
                 >
                     {formik => (
@@ -55,10 +66,15 @@ export const CreateTopicModal = ({show, setShow, handleCreate}) => {
                                     placeholder="Subject"
                                     {...formik.getFieldProps('subject')}
                                 />
-                                {formik.touched.subject && formik.errors.subject ? (
-                                    <Form.Text className="text-muted">
-                                        {formik.errors.subject}
-                                    </Form.Text>
+                                {(formik.touched.subject && formik.errors.subject) || errors.subject ? (
+                                    <>
+                                        <Form.Text className="text-muted">
+                                            {formik.errors.subject}
+                                        </Form.Text>
+                                        <Form.Text className="text-muted">
+                                            {errors.subject}
+                                        </Form.Text>
+                                    </>
                                 ) : null}
                             </Form.Group>
 
@@ -76,10 +92,15 @@ export const CreateTopicModal = ({show, setShow, handleCreate}) => {
                                         setMarkdownText(newValue);
                                     }}
                                 />
-                                {formik.touched.message && formik.errors.message ? (
-                                    <Form.Text className="text-muted">
-                                        {formik.errors.message}
-                                    </Form.Text>
+                                {(formik.touched.message && formik.errors.message) || errors.message ? (
+                                    <>
+                                        <Form.Text className="text-muted">
+                                            {formik.errors.message}
+                                        </Form.Text>
+                                        <Form.Text className="text-muted">
+                                            {errors.message}
+                                        </Form.Text>
+                                    </>
                                 ) : null}
                                 <div className="mt-3 mb-2">Preview</div>
                                 <Container className="border rounded">

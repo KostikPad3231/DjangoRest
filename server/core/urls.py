@@ -4,13 +4,14 @@ from rest_framework import routers
 
 from accounts import views as accounts_views
 from .views import BoardViewSet, TopicListAPIView, TopicDestroyAPIView, TopicCreateAPIView, TopicPostsListAPIView, \
-    PostEditAPIView, TopicLastPostsListAPIView, ExportTopicsToCSV, ExportTopicsToPDF
+    PostEditAPIView, TopicLastPostsListAPIView, ExportTopicsToCSV, ExportTopicsToPDF, CategoriesListAPIView
 
 router = routers.DefaultRouter()
 router.register(r'boards', BoardViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('categories/', CategoriesListAPIView.as_view(), name='categories-list'),
     path('boards/<int:pk>/topics/', TopicListAPIView.as_view(), name='board_topics'),
     path('boards/<int:pk>/topics/export/csv/', ExportTopicsToCSV.as_view(), name='export_topics_csv'),
     path('boards/<int:pk>/topics/export/pdf/', ExportTopicsToPDF.as_view(), name='export_topics_pdf'),

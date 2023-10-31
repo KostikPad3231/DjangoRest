@@ -2,9 +2,11 @@ from dj_rest_auth.registration.views import VerifyEmailView
 from django.contrib.admin.forms import AdminPasswordChangeForm
 from django.urls import path, include, re_path
 from dj_rest_auth.views import PasswordResetConfirmView
-from .views import BloggerRegistrationView, ReaderRegistrationView, email_confirm_redirect, password_reset_redirect, SetPasswordView
+from .views import BloggerRegistrationView, ReaderRegistrationView, email_confirm_redirect, password_reset_redirect, \
+    SetPasswordView, CaptchaLoginAPIView
 
 urlpatterns = [
+    path('login/', CaptchaLoginAPIView.as_view(), name='captcha_rest_login'),
     path('', include('dj_rest_auth.urls')),
     path('password/set/', SetPasswordView.as_view(), name='set_password'),
     path('accounts/', include('allauth.urls')),

@@ -1,5 +1,5 @@
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {Link, useNavigate} from 'react-router-dom';
+import React, {useCallback, useContext, useEffect, useMemo, useRef, useState} from 'react';
+import {Link, useNavigate, useOutletContext} from 'react-router-dom';
 import {Container, Table, Button, Modal, Breadcrumb, Row, Col, ListGroup, Card} from 'react-bootstrap'
 import {getBoards, getMe} from '../../api/requests';
 import {Header} from '../Header';
@@ -16,7 +16,8 @@ import {BOARD_TOPICS} from '../../constants/routes';
 import {Footer} from '../Footer';
 import {Messages} from '../Messages';
 import {MessageContext} from '../MessageContext';
-// TODO update user after operations
+import * as path from '../../constants/routes';
+
 export const Home = (props) => {
     const [user, setUser] = useState(props.user);
     const navigate = useNavigate();
@@ -24,20 +25,6 @@ export const Home = (props) => {
     const [loading, setLoading] = useState(false);
     const [pageCount, setPageCount] = useState(0);
     const fetchIdRef = useRef(0);
-    const [messages, setMessages] = useState([]);
-    const newMessage = (text, variant = 'success') => {
-        const message = {
-            id: Date.now(),
-            variant: variant,
-            text: text,
-        };
-
-        setMessages([...messages, message]);
-
-        setTimeout(() => {
-            setMessages(messages => messages.filter(m => m.id !== message.id));
-        }, 5000);
-    };
     const fetchBoards = useCallback(async ({pageSize, pageIndex}) => {
         const fetchId = ++fetchIdRef.current;
         setLoading(true);
@@ -62,7 +49,6 @@ export const Home = (props) => {
                 const original_obj = cell.row.original;
                 const name = original_obj.name;
                 const description = original_obj.description;
-                // TODO link to the board
                 return <div>
                     <h5>{name}</h5>
                     <small className="text-muted d-block">{description}</small>
@@ -87,11 +73,18 @@ export const Home = (props) => {
                 const original_obj = cell.row.original;
                 if (original_obj.latest_post_created_at) {
                     const created_by = original_obj.latest_post_created_by;
+                    const boardId = original_obj.id;
+                    const boardName = original_obj.name;
+                    const topicSubject = original_obj.latest_post_subject;
+                    const topicId = original_obj.latest_post_topic_id;
                     let created_at = original_obj.latest_post_created_at;
                     created_at = moment(created_at).format('MMM Do YYYY, h:mm a');
-                    // TODO link to the post
                     return <small>
-                        By {created_by} at {created_at}
+                        <Link to={path.BOARDS + '/' + boardId + '/' + topicId}
+                              state={{topicName: topicSubject, boardName}}>
+                            {topicSubject}
+                        </Link>
+                        <p>By {created_by} at {created_at}</p>
                     </small>;
                 }
                 return <small>Nothing yet</small>;
@@ -101,7 +94,7 @@ export const Home = (props) => {
     const data = useMemo(() => boards, [boards]);
 
     return (
-        <MessageContext.Provider value={messages}>
+        <>
             <Header user={user}/>
             <Container>
                 <Breadcrumb className="my-4 px-3 pt-3 d-flex rounded align-items-center"
@@ -112,7 +105,7 @@ export const Home = (props) => {
             <Container>
                 <Row>
                     {user.is_blogger && (
-                        <ListGroup className="col-sm-12 col-md-2 ms-3">
+                        <ListGroup className="col-sm-12 col-md-2 ms-3 mb-3">
                             <Card>
                                 <Card.Header>
                                     Recent actions
@@ -156,7 +149,6 @@ export const Home = (props) => {
                     )}
                     <Col>
                         <BoardsTable
-                            newMessage={newMessage}
                             user={user}
                             columns={columns}
                             data={data}
@@ -168,7 +160,7 @@ export const Home = (props) => {
                 </Row>
             </Container>
             <Footer/>
-            <Messages messages={messages}/>
-        </MessageContext.Provider>
+            {/*<Messages messages={messages}/>*/}
+        </>
     );
 };

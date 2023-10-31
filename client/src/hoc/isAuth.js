@@ -51,7 +51,6 @@ export const isAuth = (WrappedComponent, props) => {
         }
 
         if (isAuthenticated) {
-            console.log(user);
             return (
                 // <MessageContext.Provider value={messages}>
                     <WrappedComponent {...props} user={user}/>

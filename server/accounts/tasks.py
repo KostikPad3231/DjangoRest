@@ -8,7 +8,7 @@ def send_email(email_to, subject, message):
     send_mail(
         subject,
         message,
-        'sender_from@djangoboards.com',
+        'webmaster@localhost',
         [email_to],
         fail_silently=False
     )

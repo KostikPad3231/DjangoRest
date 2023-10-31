@@ -12,18 +12,16 @@ import {editBoard} from '../../api/requests';
 import {createBoard} from '../../api/requests';
 import {Link} from 'react-router-dom';
 import {BoardTopics} from './BoardTopics';
-import {BOARD_TOPICS} from '../../constants/routes';
+import {BOARD_TOPICS, BOARDS} from '../../constants/routes';
 import {Messages} from '../Messages';
 import {MessageContext} from '../MessageContext';
 
-export const BoardsTable = ({newMessage, user, columns, data, fetchData, loading, pageCount: controlledPageCount}) => {
+export const BoardsTable = ({user, columns, data, fetchData, loading, pageCount: controlledPageCount}) => {
     const [showDelete, setShowDelete] = useState(false);
     const [showEdit, setShowEdit] = useState(false);
     const [showCreate, setShowCreate] = useState(false);
     const [selectedBoard, setSelectedBoard] = useState(null);
-    const messages = useContext(MessageContext);
-    console.log('context:')
-    console.log(messages);
+    const {newMessage} = useContext(MessageContext);
     const {
         getTableProps,
         getTableBodyProps,
@@ -48,7 +46,6 @@ export const BoardsTable = ({newMessage, user, columns, data, fetchData, loading
 
     const handleDelete = async (boardId) => {
         const response = await deleteBoard(boardId);
-        console.log(response);
         if (response.status === 204) {
             newMessage('Board was deleted successfully');
         }
@@ -62,7 +59,6 @@ export const BoardsTable = ({newMessage, user, columns, data, fetchData, loading
     const handleEdit = async (boardId, values) => {
         try {
             const response = await editBoard(boardId, values);
-            console.log(response);
             if (response.status === 200) {
                 newMessage('Board was updated successfully');
             }
@@ -77,20 +73,11 @@ export const BoardsTable = ({newMessage, user, columns, data, fetchData, loading
         }
     };
     const handleCreate = async (values) => {
-        try {
-            const response = await createBoard(values);
-            if (response.status === 201) {
-                newMessage('Board was created successfully');
-            }
-            fetchData({pageIndex, pageSize});
-        } catch (e) {
-            console.log(e);
-            if (e.response.status === 400) {
-                newMessage(e.response.data.name[0], 'danger');
-            } else {
-                newMessage('Something went wrong', 'danger');
-            }
+        const response = await createBoard(values);
+        if (response.status === 201) {
+            newMessage('Board was created successfully');
         }
+        fetchData({pageIndex, pageSize});
     }
     const handleShowDelete = (board) => {
         setSelectedBoard(board);
@@ -144,9 +131,8 @@ export const BoardsTable = ({newMessage, user, columns, data, fetchData, loading
                             {row.cells.map((cell) => {
                                 if (cell.column.Header === 'Board') {
                                     return <td className="col" {...cell.getCellProps()}>
-                                        <Link to={BOARD_TOPICS}
+                                        <Link to={BOARDS + '/' + row.original.id}
                                               state={{
-                                                  boardId: row.original.id,
                                                   boardName: row.original.name,
                                               }}>
                                             {cell.render("Cell")}

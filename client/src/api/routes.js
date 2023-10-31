@@ -11,6 +11,8 @@ export  const LOGIN =  BACKEND_URL + '/auth/login/';
 export  const LOG_OUT =  BACKEND_URL + '/auth/logout/';
 export  const VERIFY_TOKEN =  BACKEND_URL + '/api/token/verify-token/';
 export const CONFIRM_EMAIL = BACKEND_URL + '/auth/registration/confirm-email/';
+
+ export const CATEGORIES = BACKEND_URL + '/api/categories/';
 export const BOARDS = BACKEND_URL + '/api/boards/';
 export const TOPICS = BACKEND_URL + '/api/topics/';
 export const CREATE_TOPIC = BACKEND_URL + '/api/topics/create/';

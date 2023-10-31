@@ -5,6 +5,10 @@ export const signUp = async (userType, values) => {
     return axios.post(API_URL.SIGN_UP + userType + '/', {...values});
 };
 
+export const getCategories = async () => {
+    return axios.get(API_URL.CATEGORIES);
+};
+
 export const getMe = async () => {
     return axios({
         method: 'get',

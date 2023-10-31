@@ -1,8 +1,10 @@
 import csv
 
+from django.conf import settings
 from django.db.models import Subquery, OuterRef, Count, F, Q, Sum
 from django.template.loader import render_to_string
 from django.http import HttpResponse
+from django.urls import reverse
 from django.views import View
 from rest_framework import viewsets, generics, status, mixins
 from rest_framework.generics import get_object_or_404
@@ -12,17 +14,22 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from weasyprint import HTML
 
-from accounts.models import Action
+from accounts.models import Action, Category
+from accounts.tasks import send_email
 from .models import Board, Post, Topic
 from .serializers import BoardSerializer, TopicSerializer, TopicCreateSerializer, TopicPostsSerializer, \
-    PostEditSerializer
+    PostEditSerializer, CategoriesSerializer
 from core.utils import StandardResultSetPagination
+
+
+class CategoriesListAPIView(generics.ListAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CategoriesSerializer
 
 
 class BoardViewSet(viewsets.ModelViewSet):
     serializer_class = BoardSerializer
     queryset = Board.objects.all()
-    # TODO return permissions
     permission_classes = [IsAuthenticated]
     pagination_class = StandardResultSetPagination
 
@@ -45,6 +52,16 @@ class BoardViewSet(viewsets.ModelViewSet):
                 .order_by('-created_at')
                 .values('created_by__username')[:1]
             ),
+            latest_post_subject=Subquery(
+                Post.objects.filter(filtering)
+                .order_by('-created_at')
+                .values('topic__subject')[:1]
+            ),
+            latest_post_topic_id=Subquery(
+                Post.objects.filter(filtering)
+                .order_by('-created_at')
+                .values('topic_id')[:1]
+            ),
         ).order_by('-created_at')
         board_list_annotated = board_list_annotated.annotate(
             topics_count=Count('topics', distinct=True),
@@ -52,7 +69,6 @@ class BoardViewSet(viewsets.ModelViewSet):
         )
         return board_list_annotated
 
-    # TODO ADD board pk to action serializer
     def destroy(self, request, *args, **kwargs):
         board_name = get_object_or_404(Board, pk=self.kwargs['pk']).name
         result = super().destroy(request, args, kwargs)
@@ -115,7 +131,18 @@ class TopicPostsListAPIView(mixins.CreateModelMixin, generics.ListAPIView):
         return Post.objects.filter(topic_id=self.kwargs['pk']).order_by('created_at')
 
     def post(self, request, *args, **kwargs):
-        return self.create(request, *args, **kwargs)
+        response = self.create(request, *args, **kwargs)
+        sender_username = response.data['created_by']['username']
+        topic_id = request.data['topic_id']
+        topic = Topic.objects.get(pk=topic_id)
+        board_id = topic.board_id
+        destination_email = topic.starter.email
+
+        topic_url = settings.CLIENT_URL + f'/boards/{board_id}/{topic_id}/?boardName={topic.board.name}&topicName={topic.subject}'
+        send_email.delay(destination_email,
+                         f'{sender_username} replied to your topic',
+                         f'See here {topic_url}')
+        return response
 
 
 class TopicLastPostsListAPIView(generics.ListAPIView):
@@ -148,8 +175,6 @@ class PostEditAPIView(generics.UpdateAPIView):
 
 class ExportTopicsToCSV(View):
     def get(self, request, pk=None):
-        print(self.kwargs)
-        print(pk)
         response = HttpResponse(content_type='text/csv')
         response['Access-Control-Expose-Headers'] = 'Content-Disposition'
         response['Content-Disposition'] = 'attachment; filename="topics.csv"'

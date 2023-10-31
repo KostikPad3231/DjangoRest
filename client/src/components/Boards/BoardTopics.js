@@ -1,5 +1,5 @@
 import React, {useContext, useEffect, useRef, useState} from 'react';
-import {Link, useLocation, useNavigate} from 'react-router-dom';
+import {Link, useLocation, useNavigate, useOutletContext, useParams} from 'react-router-dom';
 import {Container, Table, Button, Breadcrumb} from 'react-bootstrap'
 import {
     createBoard,
@@ -18,17 +18,18 @@ import {AddCircleOutline, TrashOutline} from 'react-ionicons';
 import {DeleteTopicModal} from './Modals/DeleteTopicModal';
 import {CreateTopicModal} from './Modals/CreateTopicModal';
 import * as path from '../../constants/routes';
-import {HOME} from '../../constants/routes';
+import {BOARDS} from '../../constants/routes';
 import {Footer} from '../Footer';
 import {BsFiletypeCsv, BsFiletypePdf} from 'react-icons/bs';
 import fileDownload from 'js-file-download';
 import {MessageContext} from '../MessageContext';
 
-export const BoardTopics = ({newMessage, user}) => {
+export const BoardTopics = ({user}) => {
+    const {boardId} = useParams();
     const [showDelete, setShowDelete] = useState(false);
     const [showCreate, setShowCreate] = useState(false);
     const location = useLocation();
-    const {boardId, boardName} = location.state;
+    const {boardName} = location.state;
     const navigate = useNavigate();
     const [topics, setTopics] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -36,15 +37,13 @@ export const BoardTopics = ({newMessage, user}) => {
     const fetchIdRef = useRef(0);
     const [hasMore, setHasMore] = useState(true);
     const [selectedTopic, setSelectedTopic] = useState(null);
-    const messages = useContext(MessageContext);
-    console.log('board topics context');
-    console.log(messages);
+    const {newMessage} = useContext(MessageContext);
 
     const handleDelete = async () => {
         try {
             const response = await deleteTopic(selectedTopic.id);
             if (response.status === 204) {
-                // newMessage(messages, setMessages, 'Topic was deleted successfully');
+                newMessage('Topic was deleted successfully');
             }
             fetchPageIndex.current = 0;
             setTopics([]);
@@ -52,24 +51,24 @@ export const BoardTopics = ({newMessage, user}) => {
             await fetchTopics();
         } catch (e) {
             console.log(e);
-            // newMessage(messages, setMessages, 'Something went wrong', 'danger');
+            newMessage('Something went wrong', 'danger');
         }
 
     };
     const handleCreate = async (values) => {
         values.board = boardId;
+        const response = await createTopic(values);
+        if (response.status === 201) {
+            newMessage('Topic was created successfully');
+        }
+        fetchPageIndex.current = 0;
+        setTopics([]);
+        setSelectedTopic(null);
         try {
-            const response = await createTopic(values);
-            if (response.status === 201) {
-                // newMessage(messages, setMessages, 'Topic was created successfully');
-            }
-            fetchPageIndex.current = 0;
-            setTopics([]);
-            setSelectedTopic(null);
             await fetchTopics();
-        } catch (e) {
-            console.log(e);
-            // newMessage(messages, setMessages, 'Something went wrong', 'danger');
+        }
+        catch (error) {
+            console.log(error);
         }
     };
     const handleShowDelete = (topic) => {
@@ -84,7 +83,6 @@ export const BoardTopics = ({newMessage, user}) => {
         setLoading(true);
         try {
             const response = await getBoardTopics(boardId, fetchPageIndex.current);
-            console.log(response);
             if (fetchId === fetchIdRef.current) {
                 setTopics(topics => topics.concat(response.data.results));
                 setHasMore(!!response.data.next);
@@ -107,7 +105,7 @@ export const BoardTopics = ({newMessage, user}) => {
                 <Breadcrumb className="my-4 px-3 pt-3 d-flex rounded align-items-center"
                             style={{backgroundColor: '#e9ecef'}}>
                     <Breadcrumb.Item onClick={() => {
-                        navigate(HOME);
+                        navigate(BOARDS);
                     }}>Boards</Breadcrumb.Item>
                     <Breadcrumb.Item active>{boardName}</Breadcrumb.Item>
                 </Breadcrumb>
@@ -127,18 +125,13 @@ export const BoardTopics = ({newMessage, user}) => {
                         const response = await exportTopicsCSV(boardId);
                         const contentDisposition = response.headers['content-disposition'];
                         const filename = contentDisposition.split('"')[1];
-                        console.log(response);
                         fileDownload(response.data, filename);
-                        console.log(filename);
                     }}/>
                     <BsFiletypePdf size={50} className="ms-3" cursor="pointer" onClick={async () => {
                         const response = await exportTopicsPDF(boardId);
-                        console.log(response);
                         const contentDisposition = response.headers['content-disposition'];
                         const filename = contentDisposition.split('"')[1];
-
                         fileDownload(response.data, filename);
-                        console.log(filename);
                     }}/>
                 </div>
                 <InfiniteScroll
@@ -166,21 +159,19 @@ export const BoardTopics = ({newMessage, user}) => {
                             return <tr key={topic.id}>
                                 <td>
                                     <p className="mb-0">
-                                        <Link to={path.TOPIC_POSTS}
-                                              state={{topic, board: {boardId, boardName}}}>
+                                        <Link to={path.BOARDS + '/' + boardId + '/' + topic.id}
+                                              state={{topicName: topic.subject, boardName}}>
                                             {topic.subject}
                                         </Link>
                                     </p>
                                     <small className="text-muted">
                                         Pages:
-                                        {/*TODO link to page*/}
                                         {pageRange.map((pageIndex, i) => (
                                             <Link key={i} to={path.TOPIC_POSTS}
                                                   state={{topic, board: {boardId, boardName}, page: pageIndex - 1}}>
                                                 {pageIndex}
                                             </Link>
                                         ))}
-                                        {/*TODO link to last page*/}
                                         {topic.has_many_pages && (
                                             <>... Last Page</>
                                         )}
@@ -189,10 +180,9 @@ export const BoardTopics = ({newMessage, user}) => {
                                 <td className="align-middle">{topic.starter}</td>
                                 <td className="align-middle">{topic.replies}</td>
                                 <td className="align-middle">{topic.views}</td>
-                                {/*TODO make natural time*/}
-                                <td className="align-middle">{topic.last_updated}</td>
+                                <td className="align-middle">{moment(topic.last_updated).fromNow()}</td>
                                 {user.is_blogger && (
-                                    <td>
+                                    <td className="d-flex justify-content-center">
                                         <Button variant="danger" onClick={() => handleShowDelete(topic)}>
                                             <TrashOutline
                                                 color={'#000000'}

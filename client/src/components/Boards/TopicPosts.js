@@ -1,107 +1,33 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {Link, useLocation, useNavigate} from 'react-router-dom';
+import {Link, useLocation, useNavigate, useParams} from 'react-router-dom';
 import {Container, Button, Card, Col, Carousel, Row, Image, Breadcrumb} from 'react-bootstrap'
 import {getTopicPosts} from '../../api/requests';
 import {Header} from '../Header';
 import moment from 'moment';
 import profileAvatar from '../../assets/profile-icon.png';
 import Markdown from 'react-markdown';
-import {BOARD_TOPICS, HOME, POST_CREATE, POST_EDIT} from '../../constants/routes';
+import {BOARD_TOPICS, BOARDS, POST_CREATE, POST_EDIT} from '../../constants/routes';
 import {Footer} from '../Footer';
-
-
-const Pagination = ({paginator, curPage, fetchPosts, setCurPage}) => {
-    console.log(paginator);
-    const pageRange = [];
-    for (let i = curPage - 3; i < curPage + 3; ++i) {
-        if (i >= 0 && i < paginator.pageCount) {
-            pageRange.push(i);
-        }
-    }
-    return (
-        <>
-            {curPage > 0 ? (
-                <li className="page-item">
-                    <a className="page-link" onClick={() => {
-                        setCurPage.current = 0;
-                        fetchPosts(0);
-                    }}>First</a>
-                </li>
-            ) : (
-                <li className="page-item disabled">
-                    <span className="page-link">First</span>
-                </li>
-            )}
-
-            {paginator.previous ? (
-                <li className="page-item">
-                    <a className="page-link" onClick={() => {
-                        setCurPage.current = curPage - 1;
-                        fetchPosts(curPage - 1);
-                    }}>Previous</a>
-                </li>
-            ) : (
-                <li className="page-item disabled">
-                    <span className="page-link">Previous</span>
-                </li>
-            )}
-
-            {pageRange.map((page, i) => (
-                page === curPage ? (
-                    <li className="page-item active" key={i}>
-                        <span className="page-link">
-                          {curPage + 1}
-                            <span className="visually-hidden-focusable">(current)</span>
-                        </span>
-                    </li>
-                ) : (
-                    <li className="page-item" key={i}>
-                        <a className="page-link" onClick={() => {
-                            setCurPage.current = page;
-                            fetchPosts(page);
-                        }}>{page + 1}</a>
-                    </li>
-                )
-            ))}
-
-            {paginator.next ? (
-                <li className="page-item">
-                    <a className="page-link" onClick={() => {
-                        setCurPage.current = curPage + 1;
-                        fetchPosts(curPage + 1);
-                    }}>Next</a>
-                </li>
-            ) : (
-                <li className="page-item disabled">
-                    <span className="page-link">Next</span>
-                </li>
-            )}
-
-            {curPage + 1 !== paginator.pageCount ? (
-                <li className="page-item">
-                    <a className="page-link" onClick={() => {
-                        setCurPage.current = paginator.pageCount - 1;
-                        fetchPosts(paginator.pageCount - 1);
-                    }}>Last</a>
-                </li>
-            ) : (
-                <li className="page-item disabled">
-                    <span className="page-link">Last</span>
-                </li>
-            )}
-        </>
-    );
-};
+import {Paginator} from './Paginator';
 
 
 export const TopicPosts = (props) => {
-    const location = useLocation();
-    const {topic, board} = location.state;
-    const curUser = props.user;
     const navigate = useNavigate();
+    const {boardId, topicId} = useParams();
+    const location = useLocation();
+    const searchParams = new URLSearchParams(window.location.search);
+    let boardName, topicName;
+    if (location.state) {
+        boardName = location.state.boardName;
+        topicName = location.state.topicName;
+    } else if (searchParams.get('boardName') && searchParams.get('topicName')) {
+        boardName = searchParams.get('boardName');
+        topicName = searchParams.get('topicName');
+    }
+    const curUser = props.user;
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(false);
-    const fetchPageIndex = useRef(location.state.page ? location.state.page : 0);
+    const fetchPageIndex = useRef(location.state && location.state.page ? location.state.page : 0);
     const fetchIdRef = useRef(0);
     const [hasMore, setHasMore] = useState(true);
     const [paginator, setPaginator] = useState(null);
@@ -110,9 +36,8 @@ export const TopicPosts = (props) => {
         const fetchId = ++fetchIdRef.current;
         setLoading(true);
         try {
-            const response = await getTopicPosts(topic.id, page ? page : fetchPageIndex.current);
+            const response = await getTopicPosts(topicId, page ? page : fetchPageIndex.current);
             if (fetchId === fetchIdRef.current) {
-                console.log(response);
                 setPaginator({
                     pageCount: Math.ceil(response.data.count / 10),
                     count: response.data.count,
@@ -130,33 +55,41 @@ export const TopicPosts = (props) => {
     };
 
     useEffect(() => {
+        if (!location.state && !(searchParams.get('boardName') && searchParams.get('topicName'))) {
+            navigate(BOARDS);
+        }
         fetchPosts();
     }, []);
 
     return (
-        // TODO add date to post
         <>
             <Header user={curUser}/>
             <Container>
-                <Breadcrumb className="my-4 px-3 pt-3 d-flex rounded align-items-center" style={{backgroundColor: '#e9ecef'}}>
+                <Breadcrumb className="my-4 px-3 pt-3 d-flex rounded align-items-center"
+                            style={{backgroundColor: '#e9ecef'}}>
                     <Breadcrumb.Item onClick={() => {
-                        navigate(HOME);
+                        navigate(BOARDS);
                     }}>Boards</Breadcrumb.Item>
                     <Breadcrumb.Item onClick={() => {
-                        navigate(BOARD_TOPICS, {state: {...board}});
-                    }}>{board.boardName}</Breadcrumb.Item>
-                    <Breadcrumb.Item active>{topic.subject}</Breadcrumb.Item>
+                        navigate(BOARDS + '/' + boardId, {state: {boardName}});
+                    }}>{boardName}</Breadcrumb.Item>
+                    <Breadcrumb.Item active>{topicName}</Breadcrumb.Item>
                 </Breadcrumb>
             </Container>
             <Container>
-                <Button variant="success" onClick={() => navigate(POST_CREATE, {state: {topic: topic}})}>Reply</Button>
+                <Button variant="success" onClick={() => navigate(BOARDS + '/' + boardId + '/' + topicId + '/create', {
+                    state: {
+                        topicName,
+                        boardName
+                    }
+                })}>Reply</Button>
             </Container>
-            <Container>
+            <Container className="mt-3">
                 {posts.map((post, i) => {
                     return <Card key={post.id}>
                         {i === 0 && (
                             <Card.Header style={{backgroundColor: "#212529"}} className="text-white">
-                                {topic.subject}
+                                {topicName}
                             </Card.Header>
                         )}
                         <Card.Body>
@@ -182,7 +115,7 @@ export const TopicPosts = (props) => {
                                 </Col>
                                 <div className="col-3 d-flex flex-column">
                                     {!!post.photos.length && (
-                                        <Carousel className="p-0 m-0 pr-3 d-flex align-items-center" style={{
+                                        <Carousel className="p-0 m-0 d-flex align-items-center" style={{
                                             minHeight: '150px',
                                             maxHeight: '200px',
                                             maxWidth: '300px',
@@ -198,23 +131,42 @@ export const TopicPosts = (props) => {
                                             ))}
                                         </Carousel>
                                     )}
-                                    {curUser.id === post.created_by.id && (
-                                        <Button className="align-self-end" type="button" onClick={() => {
-                                            navigate(POST_EDIT, {state: {post: post}});
-                                        }}>
-                                            Edit
-                                        </Button>
-                                    )}
                                 </div>
                             </Row>
                         </Card.Body>
+                        <Card.Footer className="d-flex justify-content-between">
+                            <div>
+                                {post.updated_at ? (
+                                    <>
+                                        Edited {moment(post.updated_at).fromNow()}
+                                    </>
+                                ) : (
+                                    <>
+                                        {moment(post.created_at).fromNow()}
+                                    </>
+                                )}
+                            </div>
+                            {curUser.id === post.created_by.id && (
+                                <Button type="button" onClick={() => {
+                                    navigate(BOARDS + '/' + boardId + '/' + topicId + '/' + post.id + '/edit', {
+                                        state: {
+                                            post,
+                                            topicName,
+                                            boardName
+                                        }
+                                    });
+                                }}>
+                                    Edit
+                                </Button>
+                            )}
+                        </Card.Footer>
                     </Card>
                 })}
                 {paginator && (paginator.previous || paginator.next) && (
                     <nav aria-label="Posts pagination" className="mb-4 d-flex">
                         <ul className="pagination mx-auto">
-                            <Pagination paginator={paginator} curPage={fetchPageIndex.current - 1}
-                                        fetchPosts={fetchPosts} setCurPage={fetchPageIndex}/>
+                            <Paginator paginator={paginator} curPage={fetchPageIndex.current - 1}
+                                       fetchPosts={fetchPosts} setCurPage={fetchPageIndex}/>
                         </ul>
                     </nav>
                 )}

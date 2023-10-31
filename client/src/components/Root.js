@@ -19,7 +19,7 @@ export const Root = (props) => {
         }, 5000);
     };
     return (
-        <MessageContext.Provider value={messages}>
+        <MessageContext.Provider value={{newMessage}}>
             <Outlet/>
             <Messages messages={messages}/>
         </MessageContext.Provider>

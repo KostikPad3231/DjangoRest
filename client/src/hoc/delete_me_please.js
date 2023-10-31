@@ -46,7 +46,6 @@ export const BoardsTable = ({user, columns, data, fetchData, loading, pageCount:
 
     const handleDelete = async (boardId) => {
         const response = await deleteBoard(boardId);
-        console.log(response);
         if (response.status === 204) {
             newMessage(messages, setMessages, 'Board was deleted successfully');
         }

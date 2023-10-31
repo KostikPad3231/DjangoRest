@@ -13,6 +13,7 @@ from rest_framework import generics, status
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 
+from dj_rest_auth.views import LoginView
 from dj_rest_auth.registration.views import RegisterView, SocialLoginView
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.twitter.views import TwitterOAuthAdapter
@@ -24,6 +25,26 @@ from dj_rest_auth.registration.views import SocialAccountListView
 from accounts.models import User
 from accounts.serializers import UserSerializer, BloggerRegisterSerializer, ReaderRegisterSerializer, \
     SocialAccountListSerializer, PasswordSetSerializer
+
+
+def check_captcha(request):
+    captcha = request.data['captcha']
+    url = 'https://www.google.com/recaptcha/api/siteverify'
+    data = {
+        'secret': settings.RECAPTCHA_SECRET_KEY,
+        'response': captcha
+    }
+    response = requests.post(url, data=data)
+    return response.json()
+
+
+class CaptchaLoginAPIView(LoginView):
+    def get_response(self):
+        captcha_result = check_captcha(self.request)
+        if captcha_result['success']:
+            return super().get_response()
+        else:
+            return Response({'captcha': 'invalid captcha'}, status=status.HTTP_403_FORBIDDEN)
 
 
 class UserRetrieveAPIView(generics.RetrieveAPIView):
@@ -48,11 +69,20 @@ class VerifyToken(APIView):
         return Response({'verified': False})
 
 
-class BloggerRegistrationView(RegisterView):
+class RegistrationView(RegisterView):
+    def create(self, request, *args, **kwargs):
+        captcha_result = check_captcha(self.request)
+        if captcha_result['success']:
+            return super().create(request, args, kwargs)
+        else:
+            return Response({'captcha': 'invalid captcha'}, status=status.HTTP_403_FORBIDDEN)
+
+
+class BloggerRegistrationView(RegistrationView):
     serializer_class = BloggerRegisterSerializer
 
 
-class ReaderRegistrationView(RegisterView):
+class ReaderRegistrationView(RegistrationView):
     serializer_class = ReaderRegisterSerializer
 
 
@@ -118,15 +148,12 @@ def github_callback(request):
         'state': state,
     })
 
-    print(response.json())
-
     key = response.json()['key']
 
     return redirect(f'http://localhost:3000/auth/github?key={key}')
 
 
 def google_callback(request):
-    print(request.GET)
     code = request.GET['code']
     state = request.GET['state']
 
@@ -134,8 +161,6 @@ def google_callback(request):
         'code': code,
         'state': state,
     })
-
-    print(response.json())
 
     key = response.json()['key']
 
@@ -158,7 +183,6 @@ def twitter_callback(request):
 @api_view(['GET'])
 def twitter_login_url(request):
     response = requests.head(request.build_absolute_uri(reverse('twitter_login_url')))
-    print(response.headers)
     return Response({'url': response.headers['Location']})
 
 

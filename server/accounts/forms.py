@@ -78,7 +78,6 @@ class AvatarForm(forms.ModelForm):
 
     def save(self, commit=True):
         avatar = super(AvatarForm, self).save(commit)
-        print(avatar.file.path)
 
         x = self.cleaned_data.get('x')
         y = self.cleaned_data.get('y')

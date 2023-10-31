@@ -32,7 +32,6 @@ class ActionSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     avatar = AvatarSerializer(required=False, allow_null=True)
     posts_count = serializers.SerializerMethodField(read_only=True)
-    # TODO sort by -made-at
     last_actions = serializers.SerializerMethodField(read_only=True)
     has_usable_password = serializers.SerializerMethodField(read_only=True)
 
@@ -120,12 +119,13 @@ class RegisterSerializer(serializers.Serializer):
 
 
 class BloggerRegisterSerializer(RegisterSerializer):
-    birthday = serializers.DateField()
+    birthday = serializers.DateField(input_formats=['iso-8601'])
     country_city = serializers.CharField(max_length=255)
     categories = serializers.StringRelatedField(many=True, read_only=True)
 
     def get_cleaned_data(self):
         data = super(BloggerRegisterSerializer, self).get_cleaned_data()
+
         extra_data = {
             'birthday': self.validated_data.get('birthday', ''),
             'country_city': self.validated_data.get('country_city', ''),
