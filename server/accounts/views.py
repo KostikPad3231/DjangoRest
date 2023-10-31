@@ -147,7 +147,7 @@ def github_callback(request):
         'code': code,
         'state': state,
     })
-
+    print(response.json())
     key = response.json()['key']
 
     return redirect(f'http://localhost:3000/auth/github?key={key}')
@@ -183,6 +183,9 @@ def twitter_callback(request):
 @api_view(['GET'])
 def twitter_login_url(request):
     response = requests.head(request.build_absolute_uri(reverse('twitter_login_url')))
+    print(response.status_code)
+    print(response.headers)
+    print(response.content)
     return Response({'url': response.headers['Location']})
 
 

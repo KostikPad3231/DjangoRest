@@ -201,22 +201,26 @@ LOGOUT_URL = 'http://localhost:3000/logout'
 CLIENT_URL = 'http://localhost:3000/boards'
 LOGIN_REDIRECT_URL = 'http://localhost:3000/boards'
 
-# SOCIAL_AUTH_GITHUB_KEY = 'bc34cbad1357908d48d3'
-# SOCIAL_AUTH_GITHUB_SECRET = 'a86bc35ff51ba42c21aa66feb058701aefbca064'
-#
-# SOCIAL_AUTH_TWITTER_KEY = 'OhFd88hHMMqbI8MYAxYp6nbxW'
-# SOCIAL_AUTH_TWITTER_SECRET = 'nsEiNCAaB5VDtc2vFiUmGPuyDSsrm6P0t291e1ix21xv5iHmTL'
-#
-# SOCIAL_AUTH_GITLAB_KEY = '3abed162d2ae869cbb2018155e1d684aaf2f47008b5a3b2ec1275647e7e351e7'
-# SOCIAL_AUTH_GITLAB_SECRET = '980fab3a93be161981c9ff061e089e59598407a9bf08b0a76b8ab9eefa6eb8ad'
-
-# twitter
-# Z0NwU21FYnc4X3pTN0Vhb2FVMGo6MTpjaQ
-# W_pGxBxNuuqAvrjUq69tmRFWUw9lkcK_xSs2-iBqG72ojO6l-s
-
-# github
-# bc34cbad1357908d48d3
-# a86bc35ff51ba42c21aa66feb058701aefbca064
-
 # ACCOUNT_ADAPTER = 'accounts.adapters.AccountAdapter'
 SOCIALACCOUNT_ADAPTER = 'accounts.adapters.SocialAccountAdapter'
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'APP': {
+            'client_id': '295898439987-kfohj5d92r0gmccum2he81rl605k1ml7.apps.googleusercontent.com',
+            'secret': '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',
+        }
+    },
+    'github': {
+        'APP': {
+            'client_id': 'bc34cbad1357908d48d3',
+            'secret': 'a94da35ed96b90740afcc087efef44d23994ec21',
+        }
+    },
+    'twitter': {
+        'APP': {
+            'client_id': 'Xai7a5bnSWZk3BNOZZyFeidrO',
+            'secret': 'gyvUeSYtT43BtjXviqhV6PbmfMEKhR4jvuw0A5bnsojDBlDx9j',
+        }
+    }
+}
